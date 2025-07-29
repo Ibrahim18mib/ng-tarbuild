@@ -1,0 +1,34 @@
+{
+  "name": "ng-tarbuild",
+  "version": "1.0.0",
+  "description": "CLI tool to build Angular apps and package them into tar files.",
+  "type": "module",
+  "main": "tar-build.mjs",
+  "bin": {
+    "ng-tarbuild": "./tar-build.mjs"
+  },
+  "license": "MIT",
+  "keywords": [
+    "angular",
+    "build",
+    "cli",
+    "tar",
+    "automation"
+  ],
+  "author": "ibrahim1718",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ibrahim18mib/ng-tarbuild"
+  },
+  "bugs": {
+    "url": "https://github.com/Ibrahim18mib/ng-tarbuild/issues"
+  },
+  "homepage": "https://github.com/Ibrahim18mib/ng-tarbuild#readme",
+  "dependencies": {
+    "chalk": "^5.4.1",
+    "commander": "^14.0.0",
+    "figlet": "^1.8.2",
+    "ora": "^8.2.0",
+    "tar": "^6.2.0"
+  }
+}
