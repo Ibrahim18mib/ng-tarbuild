@@ -46,6 +46,9 @@ Examples:
   $ ng-tarbuild --out=clinic --no-compress
       Skips compression;
 
+   $ ng-tarbuild --out=clinic --skip-build
+      Skips if already builded;   
+
   $ ng-tarbuild --out=clinic --rename=clinic-v2
       Renames folder inside archive to "clinic-v2"
 

@@ -7,11 +7,11 @@
 
 ## ✨ Features
 
-- 🏗️ Runs Angular build with production config
-- 📂 Moves output from `/browser` to root
-- 📦 Archives as `.tar`
-- 🔄 Renames `index.csr.html` to `index.html`
-- ⚡ Clean CLI UX with spinners and colors
+- 🏗️ Runs Angular production builds
+- 📂 Moves `dist/<project>/browser/*` to `dist/<project>/`
+- 📦 Creates compressed `.tar` archives
+- 🔄 Renames `index.csr.html` → `index.html` (if found)
+- ⚙️ Clean CLI UX with spinners, color output, and minimal config
 
 ## 📦 Installation
 
@@ -26,6 +26,10 @@ ng-tarbuild --out=my-doctor-app
 # Without compression
 
 ng-tarbuild --out=clinic --no-compress
+
+# Skip Angular Build (--skip-build)
+
+ng-tarbuild --out=my-app --skip-build
 
 # Rename folder inside the tar
 
