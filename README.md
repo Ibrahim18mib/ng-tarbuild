@@ -9,7 +9,7 @@
 
 - 🏗️ Runs Angular build with production config
 - 📂 Moves output from `/browser` to root
-- 📦 Archives as `.tar` or `.tar.gz`
+- 📦 Archives as `.tar`
 - 🔄 Renames `index.csr.html` to `index.html`
 - ⚡ Clean CLI UX with spinners and colors
 
