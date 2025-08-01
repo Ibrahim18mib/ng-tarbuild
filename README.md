@@ -27,6 +27,10 @@ ng-tarbuild --out=my-doctor-app
 
 ng-tarbuild --out=clinic --no-compress
 
+# Skip Angular Build (--skip-build)
+
+ng-tarbuild --out=my-app --skip-build
+
 # Rename folder inside the tar
 
 ng-tarbuild --out=clinic --rename=clinic-v2
