@@ -10,7 +10,10 @@ import figlet from 'figlet';
 import { program } from 'commander';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-const pkg = await import('./package.json', { assert: { type: 'json' } }).then(mod => mod.default);
+// const pkg = await import('./package.json', { assert: { type: 'json' } }).then(mod => mod.default);
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const pkg = require('./package.json');
 
 // ESM __dirname handling
 const __filename = fileURLToPath(import.meta.url);
@@ -153,7 +156,7 @@ async function main() {
                 file: tarballPath,
                 cwd: projectPath,
                 portable: true,
-                noMtime: true,
+                noMtime: false,
                 transform: (entry) => {
                     if (renameFolder) {
                         entry.path = entry.path.replace(
