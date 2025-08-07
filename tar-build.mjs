@@ -2,6 +2,7 @@
 
 import { execSync } from 'child_process';
 import fs from 'fs';
+import fse from 'fs-extra'; // use fs-extra
 import path from 'path';
 import tar from 'tar';
 import chalk from 'chalk';
@@ -115,11 +116,14 @@ async function main() {
     }
 
     try {
-        fs.readdirSync(browserPath).forEach((file) => {
-            const src = path.join(browserPath, file);
-            const dest = path.join(distBase, file);
-            fs.renameSync(src, dest);
-        });
+        // fs.readdirSync(browserPath).forEach((file) => {
+        //     const src = path.join(browserPath, file);
+        //     const dest = path.join(distBase, file);
+        //     fs.renameSync(src, dest);
+        // });
+
+        await fse.copy(browserPath, distBase);
+        await fse.remove(browserPath);
         fs.rmSync(browserPath, { recursive: true, force: true });
         moveSpinner.succeed('✅ Moved browser files to root and cleaned up');
     } catch (err) {
