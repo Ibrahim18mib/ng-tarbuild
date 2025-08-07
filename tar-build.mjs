@@ -142,6 +142,8 @@ async function main() {
     } else {
         renameSpinner.info('ℹ️  index.csr.html not found – skipping rename');
     }
+    console.log('📁 Final dist folder contents:');
+    console.log(fs.readdirSync(distBase));
 
 
     // Step 4: Create archive
