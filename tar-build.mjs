@@ -80,7 +80,8 @@ const browserPath = path.join(distBase, 'browser');
 const args = process.argv;
 const shouldCompress = !args.includes('--no-compress');
 const ext = '.tar';
-const tarballName = `dist_${appName}${ext}`;
+// const tarballName = `dist_${appName}${ext}`;
+const tarballName = `dist_${appName}.tar`;
 
 console.log(`\n   ➤ Compression:       ${shouldCompress ? 'Enabled (.tar)' : 'Disabled'}`);
 console.log(`   ➤ Archive Name:      ${tarballName}`);
@@ -142,7 +143,8 @@ async function main() {
     // Step 4: Create archive
     const distFolderName = path.basename(distBase);
     const archiveFolderName = renameFolder || distFolderName;
-    const tarballName = `dist_${appName}${ext}`;
+    // const tarballName = `dist_${appName}${ext}`;
+    const tarballName = `dist_${appName}.tar`;
     const tarballPath = path.join(projectPath, tarballName);
 
     console.log(`\n   ➤ Archive Name:      ${tarballName}`);
