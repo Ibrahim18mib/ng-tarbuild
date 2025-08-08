@@ -121,38 +121,41 @@ async function main() {
     }
 
     console.log('📁 Final dist folder content:');
-    console.log(fs.readdirSync(distBase));
+    fs.readdirSync(distBase).forEach((f) => console.log(`   - ${f}`));
 
     const distFolderName = path.basename(distBase);
     const archiveFolderName = renameFolder || distFolderName;
 
-    const tarSpinner = ora(`📦 Creating archive: ${tarballName}`).start();
-    try {
-        await tar.c(
-            {
-                gzip: false,
-                file: tarballPath,
-                cwd: projectPath,
-                portable: true,
-                noMtime: true,
-                transform: (entry) => {
-                    if (renameFolder) {
-                        entry.path = entry.path.replace(
-                            new RegExp(`^dist/${distFolderName}`),
-                            `dist/${renameFolder}`
-                        );
-                    }
-                    return entry;
+    if (shouldCompress) {
+        const tarSpinner = ora(`📦 Creating archive: ${tarballName}`).start();
+        try {
+            await tar.c(
+                {
+                    gzip: false,
+                    file: tarballPath,
+                    cwd: projectPath,
+                    portable: true,
+                    noMtime: true,
+                    transform: (entry) => {
+                        if (renameFolder) {
+                            entry.path = entry.path.replace(
+                                new RegExp(`^dist/${distFolderName}`),
+                                `dist/${renameFolder}`
+                            );
+                        }
+                        return entry;
+                    },
                 },
-            },
-            [path.join('dist', distFolderName)]
-        );
-
-        tarSpinner.succeed(`✅ Archive created successfully: ${tarballPath}`);
-    } catch (err) {
-        tarSpinner.fail('❌ Failed to create archive');
-        console.error(chalk.red(err.message));
-        process.exit(1);
+                [path.join('dist', distFolderName)]
+            );
+            tarSpinner.succeed(`✅ Archive created successfully: ${tarballPath}`);
+        } catch (err) {
+            tarSpinner.fail('❌ Failed to create archive');
+            console.error(chalk.red(err.message));
+            process.exit(1);
+        }
+    } else {
+        console.log(chalk.yellow('⚠️  Compression skipped (--no-compress)'));
     }
 
     console.log('\n🎉 Done. Your Angular app is ready for deployment.\n');
