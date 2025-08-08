@@ -15,16 +15,13 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const pkg = require('./package.json');
 
-// ESM __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// CLI Banner
 console.log(
     chalk.cyan(figlet.textSync('ng-tarbuild', { horizontalLayout: 'fitted' }))
 );
 
-// CLI Options
 program
     .name('ng-tarbuild')
     .description(chalk.whiteBright('📦 Build Angular app and package it into a tar archive.'))
@@ -45,7 +42,6 @@ Examples:
 `)
     .version(pkg.version, '-v, --version', 'Show version number');
 
-// Parse
 program.parse(process.argv);
 if (process.argv.length <= 2) {
     program.outputHelp();
@@ -65,7 +61,6 @@ const ext = '.tar';
 const tarballName = `dist_${appName}${ext}`;
 const tarballPath = path.join(projectPath, tarballName);
 
-// Summary log
 console.log(`\n🛠️  Options Summary`);
 console.log(`   ➤ Compression:       ${shouldCompress ? 'Enabled (.tar)' : 'Disabled'}`);
 console.log(`   ➤ Output Archive:    ${tarballName}`);
@@ -73,7 +68,6 @@ console.log(`   ➤ Folder in archive: ${renameFolder || appName}`);
 console.log(`   ➤ Project Path:      ${projectPath}\n`);
 
 async function main() {
-    // Step 1: Build Angular
     if (!options.skipBuild) {
         const buildSpinner = ora('🏗️  Building Angular app...').start();
         try {
@@ -91,7 +85,6 @@ async function main() {
         console.log(chalk.yellow('⚠️  Skipping Angular build (--skip-build)'));
     }
 
-    // Step 2: Copy browser/* → distBase
     const moveSpinner = ora('📂 Moving files from /browser to dist root...').start();
     if (!fs.existsSync(browserPath)) {
         moveSpinner.fail(`❌ browser output folder not found: ${browserPath}`);
@@ -108,7 +101,6 @@ async function main() {
         process.exit(1);
     }
 
-    // Step 3: Handle index.html or index.csr.html
     const indexHtmlPath = path.join(distBase, 'index.html');
     const indexCsrPath = path.join(distBase, 'index.csr.html');
     const renameSpinner = ora('🔍 Handling index.html...').start();
@@ -132,11 +124,9 @@ async function main() {
         renameSpinner.warn('⚠️  No index.html or index.csr.html found');
     }
 
-    // Step 4: Show final dist content
     console.log('📁 Final dist folder content:');
     console.log(fs.readdirSync(distBase));
 
-    // Step 5: Create archive
     const distFolderName = path.basename(distBase);
     const archiveFolderName = renameFolder || distFolderName;
 
