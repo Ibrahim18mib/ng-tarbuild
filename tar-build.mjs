@@ -109,14 +109,10 @@ async function main() {
         renameSpinner.succeed('✅ index.html found and kept as-is');
     } else if (fs.existsSync(indexCsrPath)) {
         try {
-            const csrContent = fs.readFileSync(indexCsrPath, 'utf-8');
-            const baseHref = csrContent.match(/<base href="([^"]*)"/)?.[1] || '/';
-            const updatedHtml = csrContent.replace(/<base href="[^"]*"/, `<base href="${baseHref}"`);
-            fs.writeFileSync(indexHtmlPath, updatedHtml, 'utf-8');
-            fs.unlinkSync(indexCsrPath);
-            renameSpinner.succeed(`✅ index.html created from CSR with base href: "${baseHref}"`);
+            fs.renameSync(indexCsrPath, indexHtmlPath);
+            renameSpinner.succeed(`✅ index.csr.html renamed to index.html`);
         } catch (err) {
-            renameSpinner.fail('❌ Failed to convert index.csr.html');
+            renameSpinner.fail('❌ Failed to rename index.csr.html');
             console.error(chalk.red(err.message));
             process.exit(1);
         }
