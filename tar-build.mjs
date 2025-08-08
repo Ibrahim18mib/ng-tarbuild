@@ -2,7 +2,7 @@
 
 import { execSync } from 'child_process';
 import fs from 'fs';
-import fse from 'fs-extra'; // use fs-extra
+import fse from 'fs-extra';
 import path from 'path';
 import tar from 'tar';
 import chalk from 'chalk';
@@ -11,58 +11,41 @@ import figlet from 'figlet';
 import { program } from 'commander';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-// const pkg = await import('./package.json', { assert: { type: 'json' } }).then(mod => mod.default);
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const pkg = require('./package.json');
 
-// ESM __dirname handling
+// ESM __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// ASCII Banner
+// CLI Banner
 console.log(
     chalk.cyan(figlet.textSync('ng-tarbuild', { horizontalLayout: 'fitted' }))
 );
 
-// CLI config
+// CLI Options
 program
     .name('ng-tarbuild')
-    .description(
-        chalk.whiteBright(
-            '📦 Build Angular app and package it into a tar or tar.gz archive.'
-        )
-    )
+    .description(chalk.whiteBright('📦 Build Angular app and package it into a tar archive.'))
     .usage('[options]')
     .requiredOption('--out <filename>', 'Output tar file name (default: <project>.tar)')
     .option('--skip-build', 'Skip Angular build step')
-    .option('--rename <foldername>', 'Rename dist subfolder before archiving')
+    .option('--rename <foldername>', 'Rename dist subfolder inside archive')
     .option('--no-compress', 'Skip tar compression')
     .option('--path <path>', 'Path to Angular project root', '.')
     .helpOption('-h, --help', 'Show this help message')
-    .addHelpText(
-        'after',
-        `
+    .addHelpText('after', `
 Examples:
-  $ ng-tarbuild --out=my-doctor-app
-      Builds Angular project and creates dist_my-doctor-app.tar.gz
-
-  $ ng-tarbuild --out=clinic --no-compress
-      Skips compression;
-
-   $ ng-tarbuild --out=clinic --skip-build
-      Skips if already builded;   
-
-  $ ng-tarbuild --out=clinic --rename=clinic-v2
-      Renames folder inside archive to "clinic-v2"
-
-  $ ng-tarbuild --out=health-app --path=../my-angular-app
-      Runs the command from a custom Angular project path
-    `
-    )
+  $ ng-tarbuild --out=my-app
+  $ ng-tarbuild --out=my-app --rename=app-v1
+  $ ng-tarbuild --out=app --skip-build
+  $ ng-tarbuild --out=ui --no-compress
+  $ ng-tarbuild --out=ui --path=../client
+`)
     .version(pkg.version, '-v, --version', 'Show version number');
 
-// Parse CLI
+// Parse
 program.parse(process.argv);
 if (process.argv.length <= 2) {
     program.outputHelp();
@@ -77,22 +60,22 @@ const distDir = path.join(projectPath, 'dist');
 const distBase = path.join(distDir, appName);
 const browserPath = path.join(distBase, 'browser');
 
-// Compression logic
-const args = process.argv;
-const shouldCompress = !args.includes('--no-compress');
+const shouldCompress = !options.noCompress;
 const ext = '.tar';
 const tarballName = `dist_${appName}${ext}`;
-// const tarballName = `dist_${appName}.tar`;
+const tarballPath = path.join(projectPath, tarballName);
 
-console.log(`\n   ➤ Compression:       ${shouldCompress ? 'Enabled (.tar)' : 'Disabled'}`);
-console.log(`   ➤ Archive Name:      ${tarballName}`);
-console.log(`   ➤ Folder in archive: ${renameFolder || appName}\n`);
+// Summary log
+console.log(`\n🛠️  Options Summary`);
+console.log(`   ➤ Compression:       ${shouldCompress ? 'Enabled (.tar)' : 'Disabled'}`);
+console.log(`   ➤ Output Archive:    ${tarballName}`);
+console.log(`   ➤ Folder in archive: ${renameFolder || appName}`);
+console.log(`   ➤ Project Path:      ${projectPath}\n`);
 
 async function main() {
+    // Step 1: Build Angular
     if (!options.skipBuild) {
-
-        // Step 1: Build Angular app
-        const buildSpinner = ora('🏗️  Building the Angular application...').start();
+        const buildSpinner = ora('🏗️  Building Angular app...').start();
         try {
             execSync(`ng build --configuration production --output-path=dist/${appName}`, {
                 stdio: 'inherit',
@@ -100,95 +83,77 @@ async function main() {
             });
             buildSpinner.succeed('✅ Angular build complete');
         } catch (err) {
-            buildSpinner.fail('❌ Build failed');
+            buildSpinner.fail('❌ Angular build failed');
             console.error(chalk.red(err.message));
             process.exit(1);
         }
     } else {
-        console.log(chalk.yellow('⚠️  Skipping Angular build step (--skip-build passed)'));
+        console.log(chalk.yellow('⚠️  Skipping Angular build (--skip-build)'));
     }
 
-    // Step 2: Move browser contents to dist root
-    const moveSpinner = ora('📂 Moving browser contents to dist root...').start();
+    // Step 2: Copy browser/* → distBase
+    const moveSpinner = ora('📂 Moving files from /browser to dist root...').start();
     if (!fs.existsSync(browserPath)) {
-        moveSpinner.fail(`❌ Build output not found at ${browserPath}`);
+        moveSpinner.fail(`❌ browser output folder not found: ${browserPath}`);
         process.exit(1);
     }
 
     try {
-        // fs.readdirSync(browserPath).forEach((file) => {
-        //     const src = path.join(browserPath, file);
-        //     const dest = path.join(distBase, file);
-        //     fs.renameSync(src, dest);
-        // });
-
-        await fse.copy(browserPath, distBase);
+        await fse.copy(browserPath, distBase, { overwrite: true });
         await fse.remove(browserPath);
-        fs.rmSync(browserPath, { recursive: true, force: true });
-        moveSpinner.succeed('✅ Moved browser files to root and cleaned up');
+        moveSpinner.succeed('✅ Moved all files from /browser and cleaned up');
     } catch (err) {
-        moveSpinner.fail('❌ Failed to move files');
+        moveSpinner.fail('❌ Failed to move /browser contents');
         console.error(chalk.red(err.message));
         process.exit(1);
     }
 
-    // Step 3: Rename index.csr.html if exists
-    // const renameSpinner = ora('🔄 Checking for index.csr.html...').start();
-    // const csrPath = path.join(distBase, 'index.csr.html');
-    // const indexPath = path.join(distBase, 'index.html');
-    // if (fs.existsSync(csrPath)) {
-    //     fs.renameSync(csrPath, indexPath);
-    //     renameSpinner.succeed("✅ Renamed 'index.csr.html' to 'index.html'");
-    // } else {
-    //     renameSpinner.info('ℹ️  index.csr.html not found – skipping rename');
-    // }
+    // Step 3: Handle index.html or index.csr.html
+    const indexHtmlPath = path.join(distBase, 'index.html');
+    const indexCsrPath = path.join(distBase, 'index.csr.html');
+    const renameSpinner = ora('🔍 Handling index.html...').start();
 
-    // Step 3: Rename index.csr.html content to index.html (preserve base href)
-    const renameSpinner = ora('🔄 Creating index.html from index.csr.html...').start();
-    const csrPath = path.join(distBase, 'index.csr.html');
-    if (fs.existsSync(csrPath)) {
+    if (fs.existsSync(indexHtmlPath)) {
+        renameSpinner.succeed('✅ index.html found and kept as-is');
+    } else if (fs.existsSync(indexCsrPath)) {
         try {
-            const content = fs.readFileSync(csrPath, 'utf-8');
-            fs.writeFileSync(indexPath, content, 'utf-8');
-            fs.unlinkSync(csrPath);
-            renameSpinner.succeed("✅ Created index.html with correct base href");
+            const csrContent = fs.readFileSync(indexCsrPath, 'utf-8');
+            const baseHref = csrContent.match(/<base href="([^"]*)"/)?.[1] || '/';
+            const updatedHtml = csrContent.replace(/<base href="[^"]*"/, `<base href="${baseHref}"`);
+            fs.writeFileSync(indexHtmlPath, updatedHtml, 'utf-8');
+            fs.unlinkSync(indexCsrPath);
+            renameSpinner.succeed(`✅ index.html created from CSR with base href: "${baseHref}"`);
         } catch (err) {
-            renameSpinner.fail('❌ Failed to create index.html');
+            renameSpinner.fail('❌ Failed to convert index.csr.html');
             console.error(chalk.red(err.message));
             process.exit(1);
         }
     } else {
-        renameSpinner.info('ℹ️  index.csr.html not found – skipping');
+        renameSpinner.warn('⚠️  No index.html or index.csr.html found');
     }
 
-    console.log('📁 Final dist folder contents:');
+    // Step 4: Show final dist content
+    console.log('📁 Final dist folder content:');
     console.log(fs.readdirSync(distBase));
 
-
-    // Step 4: Create archive
+    // Step 5: Create archive
     const distFolderName = path.basename(distBase);
     const archiveFolderName = renameFolder || distFolderName;
-    const tarballName = `dist_${appName}${ext}`;
-    // const tarballName = `dist_${appName}.tar`;
-    const tarballPath = path.join(projectPath, tarballName);
-
-    console.log(`\n   ➤ Archive Name:      ${tarballName}`);
-    console.log(`   ➤ Folder in archive: ${archiveFolderName}\n`);
 
     const tarSpinner = ora(`📦 Creating archive: ${tarballName}`).start();
     try {
         await tar.c(
             {
-                gzip: false, //no compression
+                gzip: false,
                 file: tarballPath,
                 cwd: projectPath,
                 portable: true,
-                noMtime: false,
+                noMtime: true,
                 transform: (entry) => {
                     if (renameFolder) {
                         entry.path = entry.path.replace(
                             new RegExp(`^dist/${distFolderName}`),
-                            `dist/${archiveFolderName}`
+                            `dist/${renameFolder}`
                         );
                     }
                     return entry;
@@ -197,12 +162,14 @@ async function main() {
             [path.join('dist', distFolderName)]
         );
 
-        tarSpinner.succeed(`✅ Archive created at ${tarballPath}`);
+        tarSpinner.succeed(`✅ Archive created successfully: ${tarballPath}`);
     } catch (err) {
         tarSpinner.fail('❌ Failed to create archive');
         console.error(chalk.red(err.message));
         process.exit(1);
     }
+
+    console.log('\n🎉 Done. Your Angular app is ready for deployment.\n');
 }
 
 main();
