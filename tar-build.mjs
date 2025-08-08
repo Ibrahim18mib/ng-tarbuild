@@ -133,15 +133,34 @@ async function main() {
     }
 
     // Step 3: Rename index.csr.html if exists
-    const renameSpinner = ora('🔄 Checking for index.csr.html...').start();
+    // const renameSpinner = ora('🔄 Checking for index.csr.html...').start();
+    // const csrPath = path.join(distBase, 'index.csr.html');
+    // const indexPath = path.join(distBase, 'index.html');
+    // if (fs.existsSync(csrPath)) {
+    //     fs.renameSync(csrPath, indexPath);
+    //     renameSpinner.succeed("✅ Renamed 'index.csr.html' to 'index.html'");
+    // } else {
+    //     renameSpinner.info('ℹ️  index.csr.html not found – skipping rename');
+    // }
+
+    // Step 3: Rename index.csr.html content to index.html (preserve base href)
+    const renameSpinner = ora('🔄 Creating index.html from index.csr.html...').start();
     const csrPath = path.join(distBase, 'index.csr.html');
-    const indexPath = path.join(distBase, 'index.html');
     if (fs.existsSync(csrPath)) {
-        fs.renameSync(csrPath, indexPath);
-        renameSpinner.succeed("✅ Renamed 'index.csr.html' to 'index.html'");
+        try {
+            const content = fs.readFileSync(csrPath, 'utf-8');
+            fs.writeFileSync(indexPath, content, 'utf-8');
+            fs.unlinkSync(csrPath);
+            renameSpinner.succeed("✅ Created index.html with correct base href");
+        } catch (err) {
+            renameSpinner.fail('❌ Failed to create index.html');
+            console.error(chalk.red(err.message));
+            process.exit(1);
+        }
     } else {
-        renameSpinner.info('ℹ️  index.csr.html not found – skipping rename');
+        renameSpinner.info('ℹ️  index.csr.html not found – skipping');
     }
+
     console.log('📁 Final dist folder contents:');
     console.log(fs.readdirSync(distBase));
 
