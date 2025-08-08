@@ -1,6 +1,6 @@
 {
   "name": "ng-tarbuild",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "CLI tool to build Angular apps and package them into tar files.",
   "type": "module",
   "main": "tar-build.mjs",
